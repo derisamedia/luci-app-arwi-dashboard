@@ -56,7 +56,7 @@
 1. Clone repository ini ke dalam OpenWrt SDK atau Buildroot:
 ```bash
 cd ~/openwrt/package
-git clone https://github.com/yourusername/luci-app-arwi-info.git
+git clone https://github.com/derisamedia/luci-app-arwi-info.git
 ```
 
 2. Update feeds:
@@ -85,7 +85,7 @@ bin/packages/<architecture>/base/luci-app-arwi-info_*.ipk
 
 ### Method 2: Install Pre-built IPK
 
-1. Download IPK file dari [Releases](https://github.com/yourusername/luci-app-arwi-info/releases)
+1. Download IPK file dari [Releases](https://github.com/derisamedia/luci-app-arwi-info/releases)
 
 2. Upload ke router OpenWrt Anda
 
@@ -163,7 +163,7 @@ luci-app-arwi-info/
 
 1. Clone repository:
 ```bash
-git clone https://github.com/yourusername/luci-app-arwi-info.git
+git clone https://github.com/derisamedia/luci-app-arwi-info.git
 cd luci-app-arwi-info
 ```
 
@@ -206,14 +206,16 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 - OpenWrt Project
 - LuCI Development Team
 - All contributors and users
+- IndoWrt Community
+- DBAI Community
 
 ## 📞 Support
 
 If you encounter any issues or have questions:
 
-- 🐛 [Report a Bug](https://github.com/yourusername/luci-app-arwi-info/issues)
-- 💡 [Request a Feature](https://github.com/yourusername/luci-app-arwi-info/issues)
-- 📧 Contact: your.email@example.com
+- 🐛 [Report a Bug](https://github.com/derisamedia/luci-app-arwi-info/issues)
+- 💡 [Request a Feature](https://github.com/derisamedia/luci-app-arwi-info/issues)
+- 📧 Contact: yuimizuno86@gmail.com
 
 ---
 
