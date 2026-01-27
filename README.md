@@ -44,10 +44,10 @@
 ## 📸 Screenshots
 
 ### Dashboard View
-![Dashboard](screenshot/dashboard.png)
+![Dashboard](screenshoot/dashboard.png)
 
 ### Configuration Panel
-![Settings](screenshot/settings.png)
+![Settings](screenshoot/settings.png)
 
 ## 🚀 Installation
 
