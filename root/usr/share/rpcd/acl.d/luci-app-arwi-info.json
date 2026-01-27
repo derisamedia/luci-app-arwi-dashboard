@@ -1,0 +1,46 @@
+{
+    "luci-app-arwi-info": {
+        "description": "Grant access to system info and file reading for dashboard gauges",
+        "read": {
+            "file": {
+                "/proc/stat": [
+                    "read"
+                ],
+                "/proc/meminfo": [
+                    "read"
+                ],
+                "/tmp/dhcp.leases": [
+                    "read"
+                ],
+                "/proc/net/dev": [
+                    "read"
+                ],
+                "/sys/class/thermal/thermal_zone0/temp": [
+                    "read"
+                ],
+                "/sys/class/thermal/thermal_zone1/temp": [
+                    "read"
+                ]
+            },
+            "ubus": {
+                "system": [
+                    "info"
+                ],
+                "network.interface": [
+                    "dump"
+                ]
+            },
+            "exec": {
+                "/bin/ping": [
+                    "exec"
+                ]
+            },
+            "uci": {
+                "arwi_info": [
+                    "read",
+                    "write"
+                ]
+            }
+        }
+    }
+}
