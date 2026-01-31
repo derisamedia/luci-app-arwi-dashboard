@@ -35,8 +35,15 @@ jobs:
       - name: Build luci-app-arwi-dashboard
         run: |
           cd openwrt-sdk
-          # Ensure feeds config exists
-          [ -f feeds.conf ] || cp feeds.conf.default feeds.conf
+          # Create feeds config using GitHub mirrors
+          cat > feeds.conf <<EOF
+          src-git base https://github.com/openwrt/openwrt.git;openwrt-23.05
+          src-git packages https://github.com/openwrt/packages.git;openwrt-23.05
+          src-git luci https://github.com/openwrt/luci.git;openwrt-23.05
+          src-git routing https://github.com/openwrt/routing.git;openwrt-23.05
+          src-git telephony https://github.com/openwrt/telephony.git;openwrt-23.05
+          EOF
+          
           # Update and install feeds
           ./scripts/feeds update -a
           ./scripts/feeds install -a
