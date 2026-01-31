@@ -1,5 +1,5 @@
 {
-    "luci-app-arwi-info": {
+    "luci-app-arwi-dashboard": {
         "description": "Grant access to system info and file reading for dashboard gauges",
         "read": {
             "file": {
@@ -36,7 +36,7 @@
                 ]
             },
             "uci": {
-                "arwi_info": [
+                "arwi_dashboard": [
                     "read",
                     "write"
                 ]

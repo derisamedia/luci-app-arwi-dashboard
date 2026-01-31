@@ -10,8 +10,8 @@ var callSystemInfo = rpc.declare({
 });
 
 // Use window object to strictly persist state across view reloads/module evaluations
-if (!window.arwiInfoState) {
-    window.arwiInfoState = {
+if (!window.arwiDashboardState) {
+    window.arwiDashboardState = {
         cpuLast: null,
         cpuPercent: 0,
         cpuText: '-',
@@ -21,7 +21,8 @@ if (!window.arwiInfoState) {
         tempText: '-',
         netStatus: 'WAIT',
         netClass: 'status-text',
-        netStroke: 'net-stroke-off'
+        netStroke: 'net-stroke-off',
+        trafficText: '-'
     };
 }
 
@@ -30,7 +31,7 @@ return L.view.extend({
 
     load: function () {
         return Promise.all([
-            uci.load('arwi_info'),
+            uci.load('arwi_dashboard'),
             callSystemInfo().catch(function (e) { return null; }),
             fs.read('/proc/stat').catch(function (e) { return null; }),
             fs.exec('/bin/ping', ['-c', '1', '-W', '1', '8.8.8.8']).catch(function (e) { return null; }),
@@ -39,8 +40,8 @@ return L.view.extend({
     },
 
     render: function (data) {
-        var uciData = uci.sections('arwi_info', 'arwi_info');
-        var config = uci.sections('arwi_info')[0] || {};
+        var uciData = uci.sections('arwi_dashboard', 'arwi_dashboard');
+        var config = uci.sections('arwi_dashboard')[0] || {};
 
         var enabled = config.enabled || '1';
         var showInternal = config.ping_box || '1';
@@ -178,7 +179,7 @@ return L.view.extend({
 		`;
 
         function createGaugeCard(idPrefix, label, strokeClass, initialPercent, initialText) {
-            var state = window.arwiInfoState;
+            var state = window.arwiDashboardState;
             var dashArray = "0, 100";
             var currentStroke = strokeClass;
 
@@ -267,12 +268,13 @@ return L.view.extend({
 
             return Promise.all(tasks).then(function (data) {
                 try {
+                    var now = Date.now();
                     var info = data[0];
                     var stat = data[1];
                     var netDev = data[2];
                     var ping = (showInternal === '1' && data.length > 3) ? data[3] : null;
 
-                    var state = window.arwiInfoState;
+                    var state = window.arwiDashboardState;
 
                     // CPU Update
                     if (stat) {

@@ -7,9 +7,9 @@ return view.extend({
     render: function () {
         var m, s, o;
 
-        m = new form.Map('arwi_info', _('Arwi Dashboard Settings'), _('Configure the appearance and behavior of the Arwi Info dashboard widgets.'));
+        m = new form.Map('arwi_dashboard', _('Arwi Dashboard Settings'), _('Configure the appearance and behavior of the Arwi Dashboard widgets.'));
 
-        s = m.section(form.NamedSection, 'general', 'arwi_info', _('General Settings'));
+        s = m.section(form.NamedSection, 'general', 'arwi_dashboard', _('General Settings'));
 
         o = s.option(form.Flag, 'enabled', _('Enable Dashboard Widgets'), _('Show the CPU, RAM, and Internet gauges on the status page.'));
         o.default = o.enabled;

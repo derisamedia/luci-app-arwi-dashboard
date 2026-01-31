@@ -56,7 +56,7 @@
 1. Clone repository ini ke dalam OpenWrt SDK atau Buildroot:
 ```bash
 cd ~/openwrt/package
-git clone https://github.com/derisamedia/luci-app-arwi-info.git
+git clone https://github.com/derisamedia/luci-app-arwi-dashboard.git
 ```
 
 2. Update feeds:
@@ -69,30 +69,30 @@ cd ~/openwrt
 3. Configure package:
 ```bash
 make menuconfig
-# Navigate to: LuCI -> Applications -> luci-app-arwi-info
+# Navigate to: LuCI -> Applications -> luci-app-arwi-dashboard
 # Press 'M' to select as module
 ```
 
 4. Build the package:
 ```bash
-make package/luci-app-arwi-info/compile V=s
+make package/luci-app-arwi-dashboard/compile V=s
 ```
 
 5. IPK file akan tersedia di:
 ```
-bin/packages/<architecture>/base/luci-app-arwi-info_*.ipk
+bin/packages/<architecture>/base/luci-app-arwi-dashboard_*.ipk
 ```
 
 ### Method 2: Install Pre-built IPK
 
-1. Download IPK file dari [Releases](https://github.com/derisamedia/luci-app-arwi-info/releases)
+1. Download IPK file dari [Releases](https://github.com/derisamedia/luci-app-arwi-dashboard/releases)
 
 2. Upload ke router OpenWrt Anda
 
 3. Install via SSH:
 ```bash
 opkg update
-opkg install luci-app-arwi-info_*.ipk
+opkg install luci-app-arwi-dashboard_*.ipk
 ```
 
 4. Restart LuCI:
@@ -124,7 +124,7 @@ Setelah instalasi, akses konfigurasi melalui:
 ## 📁 File Structure
 
 ```
-luci-app-arwi-info/
+luci-app-arwi-dashboard/
 ├── Makefile                          # OpenWrt package definition
 ├── README.md                         # This file
 ├── Arwi_Dashboard.png               # Logo
@@ -132,7 +132,7 @@ luci-app-arwi-info/
 │   └── luci-static/
 │       └── resources/
 │           └── view/
-│               ├── arwi_info/
+│               ├── arwi_dashboard/
 │               │   └── config.js    # Configuration page
 │               └── status/
 │                   └── include/
@@ -140,15 +140,15 @@ luci-app-arwi-info/
 └── root/
     ├── etc/
     │   └── config/
-    │       └── arwi_info            # Default UCI config
+    │       └── arwi_dashboard            # Default UCI config
     └── usr/
         └── share/
             ├── luci/
             │   └── menu.d/
-            │       └── luci-app-arwi-info.json  # Menu entry
+            │       └── luci-app-arwi-dashboard.json  # Menu entry
             └── rpcd/
                 └── acl.d/
-                    └── luci-app-arwi-info.json  # ACL permissions
+                    └── luci-app-arwi-dashboard.json  # ACL permissions
 ```
 
 ## 🛠️ Development
@@ -163,8 +163,8 @@ luci-app-arwi-info/
 
 1. Clone repository:
 ```bash
-git clone https://github.com/derisamedia/luci-app-arwi-info.git
-cd luci-app-arwi-info
+git clone https://github.com/derisamedia/luci-app-arwi-dashboard.git
+cd luci-app-arwi-dashboard
 ```
 
 2. Make your changes
@@ -213,8 +213,8 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 
 If you encounter any issues or have questions:
 
-- 🐛 [Report a Bug](https://github.com/derisamedia/luci-app-arwi-info/issues)
-- 💡 [Request a Feature](https://github.com/derisamedia/luci-app-arwi-info/issues)
+- 🐛 [Report a Bug](https://github.com/derisamedia/luci-app-arwi-dashboard/issues)
+- 💡 [Request a Feature](https://github.com/derisamedia/luci-app-arwi-dashboard/issues)
 - 📧 Contact: yuimizuno86@gmail.com
 
 ---

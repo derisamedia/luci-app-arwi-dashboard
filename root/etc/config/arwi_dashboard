@@ -1,4 +1,4 @@
-config alpha_info 'general'
+config arwi_dashboard 'general'
 	option enabled '1'
 	option ping_box '1'
 	option ping_host '8.8.8.8'
