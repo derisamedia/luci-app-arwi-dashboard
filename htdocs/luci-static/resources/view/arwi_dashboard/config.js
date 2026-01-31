@@ -14,13 +14,26 @@ return view.extend({
         o = s.option(form.Flag, 'enabled', _('Enable Dashboard Widgets'), _('Show the CPU, RAM, and Internet gauges on the status page.'));
         o.default = o.enabled;
 
-        o = s.option(form.Flag, 'ping_box', _('Show Internet Status'), _('Enable the Internet connectivity gauge.'));
+        // Widget Selection
+        o = s.option(form.Flag, 'show_cpu', _('Show CPU Load'), _('Display the CPU Load gauge.'));
+        o.default = o.enabled;
+
+        o = s.option(form.Flag, 'show_ram', _('Show RAM Usage'), _('Display the RAM Usage gauge.'));
+        o.default = o.enabled;
+
+        o = s.option(form.Flag, 'show_temp', _('Show CPU Temp'), _('Display the CPU Temperature icon.'));
+        o.default = o.enabled;
+
+        o = s.option(form.Flag, 'show_traffic', _('Show LAN Traffic'), _('Display the LAN Traffic icon.'));
+        o.default = o.enabled;
+
+        o = s.option(form.Flag, 'show_net', _('Show Internet Status'), _('Display the Internet connectivity icon.'));
         o.default = o.enabled;
 
         o = s.option(form.Value, 'ping_host', _('Ping Host'), _('Host to ping for internet connectivity check. Default is 8.8.8.8 (Google DNS).'));
         o.default = '8.8.8.8';
         o.datatype = 'host';
-        o.depends('ping_box', '1');
+        o.depends('show_net', '1');
 
         o = s.option(form.ListValue, 'refresh_rate', _('Refresh Rate'), _('How often to update the gauges (in seconds).'));
         o.value('1', _('1 Second (Fast)'));

@@ -34,6 +34,7 @@ return L.view.extend({
             uci.load('arwi_dashboard'),
             callSystemInfo().catch(function (e) { return null; }),
             fs.read('/proc/stat').catch(function (e) { return null; }),
+            fs.read('/sys/class/thermal/thermal_zone0/temp').catch(function (e) { return null; }),
             fs.exec('/bin/ping', ['-c', '1', '-W', '1', '8.8.8.8']).catch(function (e) { return null; }),
             fs.read('/proc/net/dev').catch(function (e) { return null; })
         ]);
@@ -44,7 +45,14 @@ return L.view.extend({
         var config = uci.sections('arwi_dashboard')[0] || {};
 
         var enabled = config.enabled || '1';
-        var showInternal = config.ping_box || '1';
+        var showCpu = config.show_cpu || '1';
+        var showRam = config.show_ram || '1';
+        var showTemp = config.show_temp || '1';
+        var showTraffic = config.show_traffic || '1';
+        var showNet = config.show_net || '1';
+
+        // Backwards compatibility
+        if (config.ping_box) showNet = config.ping_box;
         var pingHost = config.ping_host || '8.8.8.8';
         var refreshRate = parseInt(config.refresh_rate) || 3;
         if (refreshRate < 1) refreshRate = 1;
@@ -149,12 +157,38 @@ return L.view.extend({
 			/* Neon Glow Colors */
 			.cpu-stroke { stroke: #00f2ff; filter: drop-shadow(0 0 4px rgba(0, 242, 255, 0.8)); }
 			.ram-stroke { stroke: #ff0055; filter: drop-shadow(0 0 4px rgba(255, 0, 85, 0.8)); }
-			.traffic-stroke { stroke: #ffb700; filter: drop-shadow(0 0 4px rgba(255, 183, 0, 0.8)); }
-			.net-stroke-on { stroke: #00ff9d; filter: drop-shadow(0 0 4px rgba(0, 255, 157, 0.8)); }
-			.net-stroke-off { stroke: #ff0000; filter: drop-shadow(0 0 4px rgba(255, 0, 0, 0.8)); }
+			/* Text colors for icons */
+			.temp-stroke { color: #ff5e00; }
+			.traffic-stroke { color: #ffb700; }
+			.net-stroke-on { color: #00ff9d; }
+			.net-stroke-off { color: #ff0000; }
 			
 			.status-on { color: #00ff9d; text-shadow: 0 0 8px rgba(0, 255, 157, 0.6); }
 			.status-off { color: #ff0000; text-shadow: 0 0 8px rgba(255, 0, 0, 0.6); }
+
+			.dashboard-icon {
+				width: 54px;
+				height: 54px;
+				fill: currentColor;
+				filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.3));
+				transition: all 0.3s ease;
+			}
+
+			.icon-wrapper {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				height: 70px;
+				margin-bottom: 5px;
+			}
+			
+			.value-container {
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+				min-height: 40px;
+			}
 
 			@media (max-width: 768px) {
 				.arwi-gauges-container { 
@@ -172,16 +206,30 @@ return L.view.extend({
 					width: 80px; /* Slightly smaller gauges on mobile */
 					height: 80px;
 				}
+				.dashboard-icon {
+					width: 42px;
+					height: 42px;
+				}
+				.icon-wrapper {
+					height: 50px;
+				}
 				.percentage-text { font-size: 1.0em; }
 				.status-text { font-size: 0.8em; }
 				.gauge-label { font-size: 0.55em; margin-top: 2px; }
 			}
 		`;
 
+        var icons = {
+            temp: '<path d="M15 9H9v6h6V9zm-2 4h-2v-2h2v2zm8-2V9h-2V7c0-1.1-.9-2-2-2h-2V3h-2v2h-2V3H9v2H7c-1.1 0-2 .9-2 2v2H3v2h2v2H3v2h2v2c0 1.1.9 2 2 2h2v2h2v-2h2v2h2v-2h2c1.1 0 2-.9 2-2v-2h2v-2h-2v-2h2zm-4 6H7V7h10v10z"/>',
+            traffic: '<path d="M16 17.01V10h-2v7.01h-3L15 21l4-3.99h-3zM9 3L5 6.99h3V14h2V6.99h3L9 3z"/>',
+            net: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>'
+        };
+
         function createGaugeCard(idPrefix, label, strokeClass, initialPercent, initialText) {
             var state = window.arwiDashboardState;
             var dashArray = "0, 100";
             var currentStroke = strokeClass;
+            var isGauge = (idPrefix === 'cpu' || idPrefix === 'ram');
 
             // Defaults
             if (idPrefix === 'cpu') {
@@ -190,16 +238,19 @@ return L.view.extend({
             } else if (idPrefix === 'ram') {
                 initialText = state.ramText;
                 initialPercent = state.ramPercent;
+            } else if (idPrefix === 'temp') {
+                initialText = state.tempText;
+                initialPercent = state.tempVal;
             } else if (idPrefix === 'traffic') {
                 initialText = state.trafficText;
-                initialPercent = 100; // Traffic gauge doesn't use percentage for fill, just for visual
+                initialPercent = 100;
             } else if (idPrefix === 'net') {
                 initialText = state.netStatus;
                 currentStroke = state.netStroke.replace('circle ', '') || strokeClass;
-                dashArray = (initialText === 'ON') ? "100, 100" : "10, 100";
+                // For icon, we might update the whole class on the wrapper
             }
 
-            if (idPrefix !== 'net' && initialPercent !== undefined) {
+            if (isGauge && initialPercent !== undefined) {
                 dashArray = Math.max(0, Math.min(100, initialPercent)).toFixed(1) + ", 100";
             }
 
@@ -208,32 +259,59 @@ return L.view.extend({
             if (idPrefix === 'traffic') textClass = 'traffic-text';
 
             var card = E('div', { 'class': 'gauge-card' });
-            card.innerHTML = `
-				<div class="gauge-wrapper">
-					<svg viewBox="0 0 36 36" class="circular-chart">
-						<path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-						<path class="circle ${currentStroke}" stroke-dasharray="${dashArray}" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" id="${idPrefix}-gauge-path" />
-					</svg>
-					<div class="percentage-container">
-						<div class="${textClass}" id="${idPrefix}-text">${initialText}</div>
-					</div>
-				</div>
-				<span class="gauge-label">${label}</span>
-			`;
+
+            if (isGauge) {
+                card.innerHTML = `
+                    <div class="gauge-wrapper">
+                        <svg viewBox="0 0 36 36" class="circular-chart">
+                            <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            <path class="circle ${currentStroke}" stroke-dasharray="${dashArray}" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" id="${idPrefix}-gauge-path" />
+                        </svg>
+                        <div class="percentage-container">
+                            <div class="${textClass}" id="${idPrefix}-text">${initialText}</div>
+                        </div>
+                    </div>
+                    <span class="gauge-label">${label}</span>
+                `;
+            } else {
+                // Icon View
+                var iconSvg = icons[idPrefix] || '';
+                var iconColorClass = strokeClass.split(' ')[0]; // roughly grab the color class
+
+                // Special handling for net icon color which needs to be dynamic
+                var wrapperId = idPrefix + '-icon-wrapper';
+
+                card.innerHTML = `
+                    <div class="icon-wrapper ${iconColorClass}" id="${wrapperId}">
+                        <svg viewBox="0 0 24 24" class="dashboard-icon">
+                            ${iconSvg}
+                        </svg>
+                    </div>
+                    <div class="value-container">
+                         <div class="${textClass}" id="${idPrefix}-text">${initialText}</div>
+                    </div>
+                    <span class="gauge-label">${label}</span>
+                `;
+            }
             return card;
         }
 
-        var cpuCard = createGaugeCard('cpu', 'CPU Load', 'cpu-stroke');
-        var ramCard = createGaugeCard('ram', 'RAM Usage', 'ram-stroke');
-        var trafficCard = createGaugeCard('traffic', 'LAN Traffic', 'traffic-stroke');
+        var cpuCard = (showCpu === '1') ? createGaugeCard('cpu', 'CPU Load', 'cpu-stroke') : null;
+        var ramCard = (showRam === '1') ? createGaugeCard('ram', 'RAM Usage', 'ram-stroke') : null;
+        var tempCard = (showTemp === '1') ? createGaugeCard('temp', 'CPU Temp', 'temp-stroke') : null;
+        var trafficCard = (showTraffic === '1') ? createGaugeCard('traffic', 'LAN Traffic', 'traffic-stroke') : null;
 
         var netCard = null;
-        if (showInternal === '1') {
+        if (showNet === '1') {
             netCard = createGaugeCard('net', 'Internet', 'net-stroke-on');
         }
 
         // Gauge Order
-        var gaugesList = [cpuCard, ramCard, trafficCard];
+        var gaugesList = [];
+        if (cpuCard) gaugesList.push(cpuCard);
+        if (ramCard) gaugesList.push(ramCard);
+        if (tempCard) gaugesList.push(tempCard);
+        if (trafficCard) gaugesList.push(trafficCard);
         if (netCard) gaugesList.push(netCard);
 
         var content = E('div', { 'class': 'cbi-section', 'style': 'margin-bottom: 20px;' }, [
@@ -260,9 +338,10 @@ return L.view.extend({
             var tasks = [
                 callSystemInfo().catch(function (e) { return null; }),
                 fs.read('/proc/stat').catch(function (e) { return null; }),
+                fs.read('/sys/class/thermal/thermal_zone0/temp').catch(function (e) { return null; }),
                 fs.read('/proc/net/dev').catch(function (e) { return null; })
             ];
-            if (showInternal === '1') {
+            if (showNet === '1') {
                 tasks.push(fs.exec('/bin/ping', ['-c', '1', '-W', '1', pingHost]).catch(function (e) { return null; }));
             }
 
@@ -271,8 +350,9 @@ return L.view.extend({
                     var now = Date.now();
                     var info = data[0];
                     var stat = data[1];
-                    var netDev = data[2];
-                    var ping = (showInternal === '1' && data.length > 3) ? data[3] : null;
+                    var tempRaw = data[2];
+                    var netDev = data[3];
+                    var ping = (showNet === '1' && data.length > 4) ? data[4] : null;
 
                     var state = window.arwiDashboardState;
 
@@ -283,7 +363,7 @@ return L.view.extend({
                         var total = parseInt(cpuLine[1]) + parseInt(cpuLine[2]) + parseInt(cpuLine[3]) + parseInt(cpuLine[4]) + parseInt(cpuLine[5]) + parseInt(cpuLine[6]) + parseInt(cpuLine[7]) + parseInt(cpuLine[8]);
                         var active = total - parseInt(cpuLine[4]) - parseInt(cpuLine[5]);
 
-                        if (state.cpuLast) {
+                        if (state.cpuLast && state.cpuLast.total > 0) {
                             var diff_total = total - state.cpuLast.total;
                             var diff_active = active - state.cpuLast.active;
                             var percent = 0;
@@ -298,7 +378,10 @@ return L.view.extend({
                             if (elPath) elPath.setAttribute('stroke-dasharray', Math.max(0, Math.min(100, percent)).toFixed(1) + ', 100');
                             if (elText) elText.textContent = state.cpuText;
                         }
-                        state.cpuLast = { total: total, active: active };
+                        // Always update state, but only display if we have a valid previous state (to avoid initial 0 spin)
+                        if (!state.cpuLast || total > state.cpuLast.total) {
+                            state.cpuLast = { total: total, active: active };
+                        }
                     }
 
                     // RAM Update
@@ -310,6 +393,16 @@ return L.view.extend({
                         var elText = document.getElementById('ram-text');
                         if (elPath) elPath.setAttribute('stroke-dasharray', Math.max(0, Math.min(100, percent)).toFixed(1) + ', 100');
                         if (elText) elText.textContent = state.ramText;
+                    }
+
+                    // Temp Update
+                    if (tempRaw) {
+                        var tempC = parseInt(tempRaw) / 1000;
+                        state.tempVal = tempC;
+                        state.tempText = Math.round(tempC) + '°C';
+
+                        var elText = document.getElementById('temp-text');
+                        if (elText) elText.textContent = state.tempText;
                     }
 
                     // Traffic Update
@@ -346,24 +439,21 @@ return L.view.extend({
                     }
 
                     // Internet Update
-                    if (showInternal === '1') {
-                        var elNetPath = document.getElementById('net-gauge-path');
+                    if (showNet === '1') {
+                        var elNetWrapper = document.getElementById('net-icon-wrapper');
                         var elNetText = document.getElementById('net-text');
-                        if (elNetPath && elNetText) {
+                        if (elNetWrapper && elNetText) {
                             var isOnline = (ping && ping.code === 0);
                             var statusStr = isOnline ? 'ON' : 'OFF';
                             var classStr = isOnline ? 'status-text status-on' : 'status-text status-off';
-                            var strokeClass = isOnline ? 'circle net-stroke-on' : 'circle net-stroke-off';
-                            var strokeDash = isOnline ? '100, 100' : '10, 100';
+                            var strokeClass = isOnline ? 'icon-wrapper net-stroke-on' : 'icon-wrapper net-stroke-off';
 
                             state.netStatus = statusStr;
                             state.netClass = classStr;
-                            state.netStroke = strokeClass.replace('circle ', '');
 
                             elNetText.textContent = statusStr;
                             elNetText.className = classStr;
-                            elNetPath.setAttribute('class', strokeClass);
-                            elNetPath.setAttribute('stroke-dasharray', strokeDash);
+                            elNetWrapper.className = strokeClass;
                         }
                     }
                 } catch (e) { console.error(e); }
