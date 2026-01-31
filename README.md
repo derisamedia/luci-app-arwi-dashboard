@@ -4,6 +4,8 @@
   <img src="Arwi_Dashboard.png" alt="Arwi Dashboard Logo" width="300"/>
   
   <p><strong>Real-time System Monitoring Dashboard for OpenWrt LuCI</strong></p>
+
+  [![Support me on Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/Y8Y61SPCLW)
   
   [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
   [![OpenWrt](https://img.shields.io/badge/OpenWrt-24.xx-00B5E2.svg)](https://openwrt.org)
