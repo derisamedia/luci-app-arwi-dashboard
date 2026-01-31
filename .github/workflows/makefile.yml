@@ -20,9 +20,9 @@ jobs:
             gettext git java-propose-classpath libncurses5-dev libssl-dev python3 \
             python3-distutils unzip wget zlib1g-dev
 
-      - name: Download OpenWrt SDK (x86_64, OpenWrt 23.05.2)
+      - name: Download OpenWrt SDK (x86_64, OpenWrt 23.05.5)
         run: |
-          wget https://downloads.openwrt.org/releases/23.05.2/targets/x86/64/openwrt-sdk-23.05.2-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz
+          wget https://downloads.openwrt.org/releases/23.05.5/targets/x86/64/openwrt-sdk-23.05.5-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz
           tar -xf openwrt-sdk-*.tar.xz
           SDK_DIR=$(find . -maxdepth 1 -type d -name "openwrt-sdk-*")
           mv "$SDK_DIR" openwrt-sdk
@@ -35,8 +35,12 @@ jobs:
       - name: Build luci-app-arwi-dashboard
         run: |
           cd openwrt-sdk
+          # Ensure feeds config exists
+          [ -f feeds.conf ] || cp feeds.conf.default feeds.conf
+          # Update and install feeds
           ./scripts/feeds update -a
           ./scripts/feeds install -a
+          # Configure and compile
           make defconfig
           make package/custom/luci-app-arwi-dashboard/compile V=s
 
